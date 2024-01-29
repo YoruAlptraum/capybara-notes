@@ -1,0 +1,18 @@
+{
+    "list-style" : "•",
+    "work-notes-style": "•",
+    "questions": [
+        {
+            "question": "Question 1:",
+            "default":["Yes","No"]
+        },
+        {
+            "question": "Question 2:",
+            "default":["Maybe"]
+        },
+        {
+            "question": "Question 3:",
+            "default":[]
+        }
+    ]
+}
