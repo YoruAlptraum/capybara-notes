@@ -19,7 +19,10 @@ add a wallpaper and darkmode
 ====================================================
 
 
-
+root
 notebook/custom notebook
-frames/tabs
-canvas
+tab frame
+canvas & scrollbar
+frame/inner
+content
+
