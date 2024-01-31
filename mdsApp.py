@@ -5,17 +5,18 @@ import json
 class CustomNotebook(ttk.Notebook):
     """A ttk Notebook with close buttons on each tab"""
 
-    __initialized = False
-
-    def __init__(self, *args, **kwargs):
-        if not self.__initialized:
-            self.__initialize_custom_style()
-            self.__inititialized = True
+    def __init__(self, root, *args, **kwargs):
+        self.__initialize_custom_style()
+        self.inc_tabs = []
+        self.root = root
 
         kwargs["style"] = "CustomNotebook"
         ttk.Notebook.__init__(self, *args, **kwargs)
 
-        self._active = None
+        new_tab_button = tk.Button(self,text='+')
+        new_tab_button.bind('<Button-1>',self.add_tab)
+        new_tab_button.place(relx = 1, y=10, anchor='e')
+        self.add_tab()
 
         self.bind("<ButtonPress-1>", self.on_close_press, True)
         self.bind("<ButtonRelease-1>", self.on_close_release)
@@ -44,11 +45,21 @@ class CustomNotebook(ttk.Notebook):
         index = self.index("@%d,%d" % (event.x, event.y))
 
         if self._active == index:
-            self.forget(index)
+            # unbind and delete all widgets on tab
+            self.inc_tabs[index].unbind_and_delete()
+            self.inc_tabs.pop(index)
             self.event_generate("<<NotebookTabClosed>>")
 
         self.state(["!pressed"])
         self._active = None
+
+    def on_close(self):
+        for tab in self.inc_tabs:
+            tab.unbind_and_delete()
+
+    def add_tab(self, *args):
+        tab = ticket_tabs(self, self.root)
+        self.inc_tabs.append(tab)
 
     def __initialize_custom_style(self):
         style = ttk.Style()
@@ -84,95 +95,83 @@ class CustomNotebook(ttk.Notebook):
         })
     ])
 
-class displayWidget():
+class app():
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("MDS")
+        self.root.geometry('500x500')
+        self.root.title("Capybara Notes")
+        self.book = CustomNotebook(self.root, width=400, height=700)
+        self.book.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self.frames = []
-        self.wcycle = []
-        self.book = CustomNotebook(width=400, height=700)
-        self.book.pack(side="top", fill="both", expand=True)
-
-        self.create_tab()
-        new_tab_button = tk.Button(self.book,text='+')
-        new_tab_button.bind('<Button-1>',self.add_tab)
-        new_tab_button.place(relx = 1, y=10, anchor='e')
-
-        self.root.bind("<Tab>", lambda e: self.tab_cycle(e, False))
-        self.root.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
-
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.mainloop()
 
-    def create_tab(self,*args):
-        frame = ttk.Frame(self.book)
+    def on_close(self):
+        # Destroy widgets before closing the main window
+        self.book.on_close()
+        self.root.destroy()
 
-        name = '    '
+class ticket_tabs():
+    def __init__(self, book, root):
+        self.book = book
+        self.root = root
+        self.book.pack(side="top", fill="both", expand=True)
+        self.wcycle = []
+        self.main_frame = ttk.Frame(book)
+
+        self.book.add(self.main_frame,text="    ")
+
+        # create the scrollbar
+        scrollbar = ttk.Scrollbar(self.main_frame, orient='vertical')
+        scrollbar.pack(side="right",fill=tk.Y,expand=False)
+        
+        self.canvas = tk.Canvas(self.main_frame, highlightthickness=0,
+                               yscrollcommand=scrollbar.set)
+        self.canvas.pack(side="left",fill="both",expand=True)
+        scrollbar.config(command=self.canvas.yview)
+
+        self.sub_frame = ttk.Frame(self.canvas)
+        self.sub_frame.bind('<Configure>', self._configure_interior)
+        self.canvas.bind('<Configure>', self._configure_canvas)
+        self.sub_frame_id = self.canvas.create_window((0,0), window=self.sub_frame, anchor='nw')
+
         # change the name of the current tab
-        tab_name_lbl = ttk.Label(frame, text='Ticket')
+        tab_name_lbl = ttk.Label(self.sub_frame, text='Ticket')
         tab_name_lbl.pack(side='top', padx=10)
-        tab_name_entry = ttk.Entry(frame)
-        tab_name_entry.pack(side='top', padx=10)
-        # self.wcycle.append(tab_name_entry)
+        self.tab_name_entry = ttk.Entry(self.sub_frame)
+        self.tab_name_entry.pack(side='top', padx=10)
+        # bind events
+        self.previous_focus_widget = None
+        self.main_frame.bind('<FocusIn>', self.on_focus_in)
         for i in ("<FocusOut>","<Return>"):
-            tab_name_entry.bind(i, lambda e: self.change_tab_name())
+            self.tab_name_entry.bind(i, lambda e: self.change_tab_name())        
 
+        # add the content for the tab
         # worknotes
-        wn = ttk.Label(frame, text="Worknotes")
-        wn.pack(side='top', padx=10)
-        text_box = tk.Text(frame, height=5, width=30, wrap=tk.WORD)
-        text_box.pack(side='top', padx=10, pady=10, fill='both', expand=True)
-        # self.wcycle.append(text_box)        
+        wn = ttk.Label(self.sub_frame, text="Worknotes")
+        wn.pack()
+        text_box = tk.Text(self.sub_frame, height=10 , wrap=tk.WORD)
+        text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
         text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
         text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
 
-        # MDS questions
+        # mds questions
         for q in config["questions"]:
-            self.add_question(frame, q)
-        
-        # add the preview
-        retrieve_button = tk.Button(frame, text="Copy to clipboard", command= self.get_all_text)
+            self.add_question(self.sub_frame, q)
+
+        # retrieve text button
+        retrieve_button = tk.Button(self.sub_frame, text="Copy to clipboard", command= self.get_all_text)
         retrieve_button.pack(side='top', padx=10, pady=10, fill='both', expand=True)
 
-        # collect all wcycles and labels
-        for widget in frame.winfo_children():
+        self.root.bind("<Tab>", lambda e: self.tab_cycle(e, False))
+        self.root.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
+        # list wcycles on tab
+        for widget in self.sub_frame.winfo_children():
             if isinstance(widget, (tk.Text, ttk.Entry)):
                 # Check if the widget is a Label or Entry
                 self.wcycle.append(widget)
 
-        # set columns to resize horizontally with window
-        frame.columnconfigure(0, weight=1)
-        frame.columnconfigure(1, weight=1)
-        # add the frame to the book
-        self.book.add(frame,text=name)
-        self.book.pack(side=tk.TOP)
-        self.frames.append(frame)
-        self.book.select(frame)
-
-    def change_tab_name(self):
-        cur_tab = self.book.index(self.book.select());
-        self.book.tab(cur_tab, text=f'  {self.frames[cur_tab].winfo_children()[1].get()}  ')   
-
-    def tab_cycle(self, event, shift):
-        # Cycle focus through the specified widgets
-        current_widget = event.widget.focus_get()
-
-        if current_widget in self.wcycle:
-            current_index = self.wcycle.index(current_widget)
-            if not shift and current_index + 1 < len(self.wcycle):
-                next_index = (current_index + 1) % len(self.wcycle)
-                self.wcycle[next_index].focus_set()
-            if shift and current_index - 1 >= 0:
-                next_index = (current_index - 1) % len(self.wcycle)
-                self.wcycle[next_index].focus_set()
-        else:
-            # If the focus is on a widget outside the cycle list, let Tkinter handle it
-            event.widget.event_generate('<Tab>')
-
-        return 'break'
-
-    def add_tab(self, *args):
-        self.create_tab()
+        self.book.select(self.main_frame)
 
     def add_question(self,root, q):
         lbl = ttk.Label(root, text=q["question"])
@@ -184,8 +183,8 @@ class displayWidget():
             entry = ttk.Entry(root)
             if len(q['default']) == 1:
                 entry.insert(0,q['default']) 
-        entry.pack(side='top', fill='x', expand=True, padx=10)
-        
+        entry.pack(side='top', fill='x', expand=True, padx=10)            
+
     def get_all_text(self):
         final = ''
         line_separator = "\n========================== MDS =========================="
@@ -194,7 +193,7 @@ class displayWidget():
         labels = []
 
         # collect all wcycles and labels in the tab
-        for widget in self.frames[cur_tab].winfo_children():
+        for widget in self.sub_frame.winfo_children():
             if isinstance(widget, (tk.Text, ttk.Entry)):
                 # Check if the widget is a Label or Entry
                 wcycle.append(widget)
@@ -216,10 +215,66 @@ class displayWidget():
                 final += f' \n{ls_style} {lbl} {"n/a" if t == "" else t}'
         final+=line_separator
         
-        self.root.clipboard_clear()
-        self.root.clipboard_append(final)
-        self.root.update()
-        # print(final)
+        self.book.clipboard_clear()
+        self.book.clipboard_append(final)
+        self.book.update()
+
+    def on_focus_in(self, event):
+        # Update the previous focus widget during FocusIn event
+        self.previous_focus_widget = event.widget
+    
+    def change_tab_name(self):
+        # check if there is a previous focus widget and change its name
+        # this changes the name of the tab where the focus exited
+        if self.previous_focus_widget:
+            ind = self.book.index(self.previous_focus_widget)
+            self.book.tab(ind, text=f'  {self.book.inc_tabs[ind].tab_name_entry.get()}  ')
+        
+    def _configure_interior(self,event):
+        # update the scrollbars to match sub frame size
+        size = (self.sub_frame.winfo_reqwidth(), self.sub_frame.winfo_reqheight())
+        self.canvas.config(scrollregion=(0,0,size[0],size[1]))
+        if self.sub_frame.winfo_reqwidth() != self.sub_frame.winfo_width():
+            # update canvas width to fit sub frame
+            self.canvas.config(width=self.sub_frame.winfo_reqwidth())
+
+    def _configure_canvas(self, event):
+        if self.sub_frame.winfo_reqwidth() != self.canvas.winfo_width():
+            # update sub frame's width to fill canvas
+            self.canvas.itemconfigure(self.sub_frame_id, width=self.canvas.winfo_width())
+
+    def tab_cycle(self, event, shift):
+        # Cycle focus through the specified widgets
+        current_widget = event.widget.focus_get()
+
+        if current_widget in self.wcycle:
+            current_index = self.wcycle.index(current_widget)
+            if not shift and current_index + 1 < len(self.wcycle):
+                next_index = (current_index + 1) % len(self.wcycle)
+                self.wcycle[next_index].focus_set()
+            if shift and current_index - 1 >= 0:
+                next_index = (current_index - 1) % len(self.wcycle)
+                self.wcycle[next_index].focus_set()
+        else:
+            # If the focus is on a widget outside the cycle list, let Tkinter handle it
+            event.widget.event_generate('<Tab>')
+
+        return 'break'
+
+    def unbind_and_delete(self):
+        # Unbind all events from widgets in the frame
+        for widget in self.sub_frame.winfo_children():
+            widget.unbind_all('<Event>')  # Replace '<Event>' with the specific event you want to unbind
+
+        # Destroy all widgets in the frame
+        for widget in self.sub_frame.winfo_children():
+            widget.destroy()
+
+        # Destroy the frame itself
+        self.sub_frame.destroy()
+        self.canvas.destroy()
+        self.main_frame.destroy()
+
 
 if __name__ == "__main__":
     with open('config.json', 'r', encoding='utf-8') as json_file:
@@ -227,5 +282,5 @@ if __name__ == "__main__":
     ls_style = config['list-style']
     wn_style = config['work-notes-style']
 
-    app = displayWidget()
+    app = app()
 

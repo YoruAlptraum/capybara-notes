@@ -3,8 +3,6 @@ App to assist with filling a mds template
 
 # Current issues
 • Memory leaks: Need to properly unbind and delete tabs and its widgets
-• App is too bit in some screens: Need to change structure to allow scrollbar for the tab (use canvas)
-• Tabs are getting renamed to the name of deleted tabs: Need to change tabs to be classes to fix issues with 
 
 
 # possible next aditions 
@@ -17,12 +15,3 @@ there needs to be a button to copy only the worknotes
 
 add a wallpaper and darkmode
 ====================================================
-
-
-root
-notebook/custom notebook
-tab frame
-canvas & scrollbar
-frame/inner
-content
-
