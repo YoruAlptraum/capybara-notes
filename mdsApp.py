@@ -115,8 +115,7 @@ class app():
         # Destroy widgets before closing the main window
         self.book.on_close()
         self.root.destroy()
-
-
+    
 class ticket_tabs():
     def __init__(self, book, root):
         self.book = book
@@ -154,12 +153,14 @@ class ticket_tabs():
 
         # add the content for the tab
         # worknotes
-        wn = ttk.Label(self.sub_frame, text="Worknotes")
+        wn = ttk.Label(self.sub_frame, text=worknotes_lbl)
         wn.pack()
-        text_box = tk.Text(self.sub_frame, height=10 , wrap=tk.WORD)
-        text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
-        text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
-        text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
+        self.text_box = tk.Text(self.sub_frame, height=worknotes_height , wrap=tk.WORD, undo=True)
+        self.text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
+        self.text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
+        self.text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
+        self.text_box.bind("<Control-BackSpace>" , self.text_backspace)
+        self.text_box.bind("<Control-Delete>" , self.text_delete)
 
         # mds questions
         for q in config["questions"]:
@@ -179,6 +180,14 @@ class ticket_tabs():
 
         self.book.select(self.main_frame)
 
+    def text_backspace(self, event):
+        event.widget.delete("insert-1c wordstart", "insert")
+        return "break"
+
+    def text_delete(self, event):
+        event.widget.delete("insert", "insert wordend")
+        return "break"
+
     def add_question(self,root, q):
         lbl = ttk.Label(root, text=q["question"])
         lbl.pack(side='top', fill='x', anchor='w', padx=10)
@@ -193,31 +202,27 @@ class ticket_tabs():
 
     def get_all_text(self):
         final = ''
-        line_separator = "\n========================== MDS =========================="
-        wcycle = []
         labels = []
+        line_separator = f'{line_separator_style} {self.tab_name_entry.get()} {line_separator_style}\n'
 
-        # collect all wcycles and labels in the tab
+        # collect all labels in the tab
         for widget in self.sub_frame.winfo_children():
-            if isinstance(widget, (tk.Text, ttk.Entry)):
-                # Check if the widget is a Label or Entry
-                wcycle.append(widget)
             if isinstance(widget, ttk.Label):
                 labels.append(widget.cget('text'))
         
         # Iterate through all widgets in the tab
-        for lbl, txt in zip(labels, wcycle):
-            if lbl == "Worknotes":
-                final += f'\nL1/L2 Worknotes: \n'
+        for lbl, txt in zip(labels, self.wcycle):
+            if lbl == worknotes_lbl:
+                final += f'L1/L2 {worknotes_lbl}: \n'
                 lines = txt.get("1.0", "end-1c").split('\n')
-                lines = [f'{wn_style} {line.capitalize()}' if line else '\n' for line in lines]
+                lines = [f'{worknotes_style} {line.capitalize()}' if line else '\n' for line in lines]
                 final += '\n'.join(lines).strip()
-                final += line_separator
+                final += f'\n{line_separator}'
             elif lbl == "Ticket":
-                final += f'======================= {txt.get()} ======================='
+                final += line_separator
             else:
                 t = (txt.get() if isinstance(txt, ttk.Entry) else txt.get("1.0", "end-1c")).strip()
-                final += f' \n{ls_style} {lbl} {"n/a" if t == "" else t}'
+                final += f'{list_style} {lbl} {"n/a" if t == "" else t} \n'
         final+=line_separator
         
         self.book.clipboard_clear()
@@ -265,7 +270,7 @@ class ticket_tabs():
         return 'break'
 
     def unbind_and_delete(self):
-        sub_frame_events = ["<Tab>,","<Shift-Tab>","<FocusOut>","<Return>"]
+        sub_frame_events = ["<Tab>,","<Shift-Tab>","<FocusOut>","<Return>",'<Control-BackSpace>','<Control-Delete>']
         # Unbind all events from widgets in the frame
         for widget in self.sub_frame.winfo_children():
             for e in sub_frame_events:
@@ -294,10 +299,13 @@ class ticket_tabs():
 if __name__ == "__main__":
     with open('config.json', 'r', encoding='utf-8') as json_file:
         config = json.load(json_file)
-    ls_style = config['list-style']
-    wn_style = config['work-notes-style']
     app_name = config['app-name']
     icon_path = config['icon-path']
-
+    worknotes_lbl = config["worknotes-lbl"]
+    worknotes_height = config["worknotes-height"]
+    worknotes_style = config['worknotes-style']
+    list_style = config['list-style']
+    line_separator_style = f'{config['line-separator-style']}'
+    
     app = app()
 

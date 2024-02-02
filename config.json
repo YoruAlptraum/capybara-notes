@@ -1,8 +1,11 @@
 {
-    "list-style" : "•",
-    "work-notes-style": "•",
     "app-name": "Capybara Notes",
     "icon-path": "assets/capy neon.ico",
+    "worknotes-lbl": "worknotes" ,
+    "worknotes-height": 10,
+    "worknotes-style": "•",
+    "list-style" : "•",
+    "line-separator-style": "=================",
     "questions": [
         {
             "question": "Template question 1",
