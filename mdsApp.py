@@ -99,10 +99,15 @@ class app():
     def __init__(self):
         self.root = tk.Tk()
         self.root.geometry('500x500')
-        self.root.title("Capybara Notes")
+        self.root.title(app_name)
+        self.root.iconbitmap(icon_path)
         self.book = CustomNotebook(self.root, width=400, height=700)
         self.book.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
+        
+        style = ttk.Style()
+        # Configure the style for all frames
+        style.configure("TNotebook", background="lightblue")
+        
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.mainloop()
 
@@ -110,6 +115,7 @@ class app():
         # Destroy widgets before closing the main window
         self.book.on_close()
         self.root.destroy()
+
 
 class ticket_tabs():
     def __init__(self, book, root):
@@ -144,7 +150,7 @@ class ticket_tabs():
         self.previous_focus_widget = None
         self.main_frame.bind('<FocusIn>', self.on_focus_in)
         for i in ("<FocusOut>","<Return>"):
-            self.tab_name_entry.bind(i, lambda e: self.change_tab_name())        
+            self.tab_name_entry.bind(i, lambda e: self.change_tab_name())
 
         # add the content for the tab
         # worknotes
@@ -188,7 +194,6 @@ class ticket_tabs():
     def get_all_text(self):
         final = ''
         line_separator = "\n========================== MDS =========================="
-        cur_tab = self.book.index(self.book.select());
         wcycle = []
         labels = []
 
@@ -249,30 +254,40 @@ class ticket_tabs():
 
         if current_widget in self.wcycle:
             current_index = self.wcycle.index(current_widget)
-            if not shift and current_index + 1 < len(self.wcycle):
-                next_index = (current_index + 1) % len(self.wcycle)
+            cyclel = len(self.wcycle)
+            if not shift and current_index + 1 < cyclel:
+                next_index = (current_index + 1)
                 self.wcycle[next_index].focus_set()
-            if shift and current_index - 1 >= 0:
-                next_index = (current_index - 1) % len(self.wcycle)
+            if shift and current_index > 0:
+                next_index = (current_index - 1)
                 self.wcycle[next_index].focus_set()
-        else:
-            # If the focus is on a widget outside the cycle list, let Tkinter handle it
-            event.widget.event_generate('<Tab>')
 
         return 'break'
 
     def unbind_and_delete(self):
+        sub_frame_events = ["<Tab>,","<Shift-Tab>","<FocusOut>","<Return>"]
         # Unbind all events from widgets in the frame
         for widget in self.sub_frame.winfo_children():
-            widget.unbind_all('<Event>')  # Replace '<Event>' with the specific event you want to unbind
+            for e in sub_frame_events:
+                widget.unbind_all(e)
 
         # Destroy all widgets in the frame
         for widget in self.sub_frame.winfo_children():
             widget.destroy()
+        
+        for widget in self.main_frame.winfo_children():
+            for e in sub_frame_events:
+                widget.unbind_all(e)
+            
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
 
         # Destroy the frame itself
+        self.sub_frame.unbind_all('<Configure>')
         self.sub_frame.destroy()
+        self.canvas.unbind_all('<Configure>')
         self.canvas.destroy()
+        self.main_frame.unbind_all('<FocusIn>')
         self.main_frame.destroy()
 
 
@@ -281,6 +296,8 @@ if __name__ == "__main__":
         config = json.load(json_file)
     ls_style = config['list-style']
     wn_style = config['work-notes-style']
+    app_name = config['app-name']
+    icon_path = config['icon-path']
 
     app = app()
 

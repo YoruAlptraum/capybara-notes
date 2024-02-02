@@ -1,17 +1,55 @@
 {
     "list-style" : "•",
     "work-notes-style": "•",
+    "app-name": "Capybara Notes",
+    "icon-path": "assets/capy neon.ico",
     "questions": [
         {
-            "question": "Question 1:",
-            "default":["Yes","No"]
+            "question": "Template question 1",
+            "default":["yes","no"]
         },
         {
-            "question": "Question 2:",
-            "default":["Maybe"]
+            "question": "Template question 2",
+            "default":[]
         },
         {
-            "question": "Question 3:",
+            "question": "Template question 3",
+            "default":[]
+        },
+        {
+            "question": "Template question 4",
+            "default":[]
+        },
+        {
+            "question": "Template question 5",
+            "default":[]
+        },
+        {
+            "question": "Template question 6",
+            "default":[]
+        },
+        {
+            "question": "Template question 7",
+            "default":[]
+        },
+        {
+            "question": "Template question 8",
+            "default":[]
+        },
+        {
+            "question": "Template question 9",
+            "default":[]
+        },
+        {
+            "question": "Template question 10",
+            "default":[]
+        },
+        {
+            "question": "Template question 11",
+            "default":[]
+        },
+        {
+            "question": "Template question 12",
             "default":[]
         }
     ]
