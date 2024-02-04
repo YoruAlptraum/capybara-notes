@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 import json
+import ctypes as ct
 
 class CustomNotebook(ttk.Notebook):
-    """A ttk Notebook with close buttons on each tab"""
+    # A ttk Notebook with close buttons on each tab
 
     def __init__(self, root, *args, **kwargs):
         self.__initialize_custom_style()
@@ -22,8 +23,6 @@ class CustomNotebook(ttk.Notebook):
         self.bind("<ButtonRelease-1>", self.on_close_release)
 
     def on_close_press(self, event):
-        """Called when the button is pressed over the close button"""
-
         element = self.identify(event.x, event.y)
 
         if "close" in element:
@@ -33,7 +32,6 @@ class CustomNotebook(ttk.Notebook):
             return "break"
 
     def on_close_release(self, event):
-        """Called when the button is released"""
         if not self.instate(['pressed']):
             return
 
@@ -45,7 +43,6 @@ class CustomNotebook(ttk.Notebook):
         index = self.index("@%d,%d" % (event.x, event.y))
 
         if self._active == index:
-            # unbind and delete all widgets on tab
             self.inc_tabs[index].unbind_and_delete()
             self.inc_tabs.pop(index)
             self.event_generate("<<NotebookTabClosed>>")
@@ -103,17 +100,26 @@ class app():
         self.root.iconbitmap(icon_path)
         self.book = CustomNotebook(self.root, width=400, height=700)
         self.book.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        
-        style = ttk.Style()
-        # Configure the style for all frames
-        style.configure("TNotebook", background="lightblue")
-        
+
+        # title border darkmode let's gooooooooooooooooooo
+        if dark_mode:
+            self.root.update()
+            set_window_attribute = ct.windll.dwmapi.DwmSetWindowAttribute
+            get_parent = ct.windll.user32.GetParent
+            hwnd = get_parent(self.root.winfo_id())
+            value = 2
+            value = ct.c_int(value)
+            set_window_attribute(hwnd, 20, ct.byref(value),4)
+            
+            
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.mainloop()
 
     def on_close(self):
         # Destroy widgets before closing the main window
         self.book.on_close()
+        for bind in self.root.bind():
+            self.root.unbind(bind)
         self.root.destroy()
     
 class ticket_tabs():
@@ -123,6 +129,8 @@ class ticket_tabs():
         self.book.pack(side="top", fill="both", expand=True)
         self.wcycle = []
         self.main_frame = ttk.Frame(book)
+        self.root.bind('<Control-BackSpace>', self.entry_backspace_word)
+        self.root.bind('<Control-Delete>', self.entry_delete_word)
 
         self.book.add(self.main_frame,text="    ")
 
@@ -152,22 +160,17 @@ class ticket_tabs():
             self.tab_name_entry.bind(i, lambda e: self.change_tab_name())
 
         # add the content for the tab
-        # worknotes
-        wn = ttk.Label(self.sub_frame, text=worknotes_lbl)
-        wn.pack()
-        self.text_box = tk.Text(self.sub_frame, height=worknotes_height , wrap=tk.WORD, undo=True)
-        self.text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
-        self.text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
-        self.text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
-        self.text_box.bind("<Control-BackSpace>" , self.text_backspace)
-        self.text_box.bind("<Control-Delete>" , self.text_delete)
-
-        # mds questions
-        for q in config["questions"]:
-            self.add_question(self.sub_frame, q)
+        if worknotes_below:
+            for q in config["questions"]:
+                self.add_question(self.sub_frame, q)
+            self.add_worknotes()
+        else:
+            self.add_worknotes()            
+            for q in config["questions"]:
+                self.add_question(self.sub_frame, q)
 
         # retrieve text button
-        retrieve_button = tk.Button(self.sub_frame, text="Copy to clipboard", command= self.get_all_text)
+        retrieve_button = ttk.Button(self.sub_frame, text=copy_btn_lbl, command= self.get_all_text)
         retrieve_button.pack(side='top', padx=10, pady=10, fill='both', expand=True)
 
         self.root.bind("<Tab>", lambda e: self.tab_cycle(e, False))
@@ -187,6 +190,40 @@ class ticket_tabs():
     def text_delete(self, event):
         event.widget.delete("insert", "insert wordend")
         return "break"
+    
+    def entry_backspace_word(self,event):
+        entry = event.widget
+        current_pos = entry.index(tk.INSERT)
+        
+        # Find the position of the last space before the current insertion cursor
+        start_pos = entry.get()[:current_pos].rfind(' ') +1
+        
+        # If no space is found, consider the start of the entry
+        if start_pos == -1:
+            start_pos = 0
+
+        # Delete the text from the last space to the current insertion cursor
+        entry.delete(start_pos, current_pos)
+
+        return 'break'  # Prevent default behavior (e.g., inserting a character)
+
+    def entry_delete_word(self, event):
+        entry = event.widget
+        current_pos = entry.index(tk.INSERT)
+        
+        # Find the position of the last space before the current insertion cursor
+        end_pos = entry.get()[current_pos:].find(' ') 
+
+        # If no space is found, consider the end of the entry
+        if end_pos == -1:
+            end_pos = entry.index(tk.END)
+        else:
+            end_pos += current_pos
+
+        # Delete the text from the last space to the current insertion cursor
+        entry.delete(current_pos, end_pos)
+
+        return 'break'  # Prevent default behavior (e.g., inserting a character)
 
     def add_question(self,root, q):
         lbl = ttk.Label(root, text=q["question"])
@@ -199,6 +236,16 @@ class ticket_tabs():
             if len(q['default']) == 1:
                 entry.insert(0,q['default']) 
         entry.pack(side='top', fill='x', expand=True, padx=10)            
+
+    def add_worknotes(self):
+        wn = ttk.Label(self.sub_frame, text=worknotes_lbl)
+        wn.pack()
+        self.text_box = tk.Text(self.sub_frame, height=worknotes_height , wrap=tk.WORD, undo=True)
+        self.text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
+        self.text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
+        self.text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
+        self.text_box.bind("<Control-BackSpace>" , self.text_backspace)
+        self.text_box.bind("<Control-Delete>" , self.text_delete)
 
     def get_all_text(self):
         final = ''
@@ -213,17 +260,21 @@ class ticket_tabs():
         # Iterate through all widgets in the tab
         for lbl, txt in zip(labels, self.wcycle):
             if lbl == worknotes_lbl:
+                final += f'{line_separator}'
                 final += f'L1/L2 {worknotes_lbl}: \n'
                 lines = txt.get("1.0", "end-1c").split('\n')
                 lines = [f'{worknotes_style} {line.capitalize()}' if line else '\n' for line in lines]
                 final += '\n'.join(lines).strip()
                 final += f'\n{line_separator}'
             elif lbl == "Ticket":
-                final += line_separator
+                pass
             else:
                 t = (txt.get() if isinstance(txt, ttk.Entry) else txt.get("1.0", "end-1c")).strip()
                 final += f'{list_style} {lbl} {"n/a" if t == "" else t} \n'
-        final+=line_separator
+        if worknotes_below:
+            final = line_separator + final
+        else:
+            final += line_separator
         
         self.book.clipboard_clear()
         self.book.clipboard_append(final)
@@ -270,31 +321,25 @@ class ticket_tabs():
         return 'break'
 
     def unbind_and_delete(self):
-        sub_frame_events = ["<Tab>,","<Shift-Tab>","<FocusOut>","<Return>",'<Control-BackSpace>','<Control-Delete>']
-        # Unbind all events from widgets in the frame
+        # Unbind all events from each widget in sub frame and destroy it
         for widget in self.sub_frame.winfo_children():
-            for e in sub_frame_events:
-                widget.unbind_all(e)
-
-        # Destroy all widgets in the frame
-        for widget in self.sub_frame.winfo_children():
-            widget.destroy()
-        
-        for widget in self.main_frame.winfo_children():
-            for e in sub_frame_events:
-                widget.unbind_all(e)
-            
-        for widget in self.main_frame.winfo_children():
+            for e in widget.bind():
+                widget.unbind(e)
             widget.destroy()
 
-        # Destroy the frame itself
-        self.sub_frame.unbind_all('<Configure>')
+        self.sub_frame.unbind('<Configure>')
         self.sub_frame.destroy()
-        self.canvas.unbind_all('<Configure>')
+        self.canvas.unbind('<Configure>')
         self.canvas.destroy()
-        self.main_frame.unbind_all('<FocusIn>')
-        self.main_frame.destroy()
 
+        # Unbind all events from each widget in main frame and destroy it
+        for widget in self.main_frame.winfo_children():
+            for e in widget.bind():
+                widget.unbind(e)
+            widget.destroy()
+
+        self.main_frame.unbind('<FocusIn>')
+        self.main_frame.destroy()
 
 if __name__ == "__main__":
     with open('config.json', 'r', encoding='utf-8') as json_file:
@@ -305,7 +350,10 @@ if __name__ == "__main__":
     worknotes_height = config["worknotes-height"]
     worknotes_style = config['worknotes-style']
     list_style = config['list-style']
-    line_separator_style = f'{config['line-separator-style']}'
+    line_separator_style = config['line-separator-style']
+    dark_mode = config['dark-mode']
+    worknotes_below = config['worknotes-below']
+    copy_btn_lbl = config['copy-btn-lbl']
     
     app = app()
 

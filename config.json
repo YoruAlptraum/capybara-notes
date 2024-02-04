@@ -1,11 +1,14 @@
 {
     "app-name": "Capybara Notes",
-    "icon-path": "assets/capy neon.ico",
+    "icon-path": "assets/capy-neon-closeup.ico",
     "worknotes-lbl": "worknotes" ,
+    "copy-btn-lbl": "Copy to clipboard",
     "worknotes-height": 10,
     "worknotes-style": "•",
     "list-style" : "•",
     "line-separator-style": "=================",
+    "worknotes-below": false,
+    "dark-mode": true,
     "questions": [
         {
             "question": "Template question 1",
