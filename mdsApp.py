@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import PhotoImage
 import json
 import ctypes as ct
 
@@ -7,14 +8,14 @@ class CustomNotebook(ttk.Notebook):
     # A ttk Notebook with close buttons on each tab
 
     def __init__(self, root, *args, **kwargs):
-        self.__initialize_custom_style()
-        self.inc_tabs = []
         self.root = root
+        self.inc_tabs = []
+        self.__initialize_custom_style()
 
         kwargs["style"] = "CustomNotebook"
         ttk.Notebook.__init__(self, *args, **kwargs)
 
-        new_tab_button = tk.Button(self,text='+')
+        new_tab_button = tk.Button(self,text='+', background=bg_color, foreground=txt_color, activebackground=bg_color, activeforeground=txt_color)
         new_tab_button.bind('<Button-1>',self.add_tab)
         new_tab_button.place(relx = 1, y=10, anchor='e')
         self.add_tab()
@@ -65,8 +66,87 @@ class CustomNotebook(ttk.Notebook):
                 R0lGODlhCAAIAMIBAAAAADs7O4+Pj9nZ2Ts7Ozs7Ozs7Ozs7OyH+EUNyZWF0ZWQg
                 d2l0aCBHSU1QACH5BAEKAAQALAAAAAAIAAgAAAMVGDBEA0qNJyGw7AmxmuaZhWEU
                 5kEJADs=
-                ''')
+                '''),
         )
+        if theme in style.theme_names():
+            style.theme_use()
+        else:
+            self.root.option_add("*TCombobox*Listbox*Background", bg_color)
+            self.root.option_add("*TCombobox*Listbox*Foreground", txt_color)
+            style.theme_create(theme, parent="alt", settings={
+                    "CustomNotebook": {
+                        "configure": {
+                            "background" : bg_color,
+                            "bordercolor": txt_color,
+                        },
+                    },
+                    "CustomNotebook.Tab": {
+                        "configure": {
+                            "background" : bg_color,
+                            "foreground" : txt_color,
+                            "focuscolor" : field_color,
+                            "bordercolor": txt_color
+                        },
+                    },
+                    'TFrame': {
+                        'configure': {
+                            'background': bg_color,
+                        }
+                    },
+                    'TLabel': {
+                        'configure': {
+                            'background': bg_color,
+                            'foreground' : txt_color
+                        }
+                    },
+                    'TScrollbar': {
+                        'configure': {
+                            'background  ': bg_color,
+                            'troughcolor ': bg_color,
+                            'arrowcolor ' : txt_color,
+                            'bordercolor  ': txt_color
+                        }
+                    },
+                    'TButton': {
+                        'configure': {
+                            'background  ': bg_color,
+                            'foreground' : txt_color,
+                            'fieldbackground ': field_color,
+                            'bordercolor ': bg_color,
+                            'insertcolor ': txt_color,
+                        }
+                    },
+                    'TEntry': {
+                        'configure': {
+                            'background  ': bg_color,
+                            'foreground' : txt_color,
+                            'fieldbackground ': field_color,
+                            'bordercolor ': bg_color,
+                            'insertcolor ': txt_color,
+                            'selectbackground ': highlight,
+                            'selectforeground ': txt_color,
+                        }
+                    },
+                    'TCombobox': {
+                        'configure': {
+                            'background  ': bg_color,
+                            'foreground' : txt_color,
+                            'fieldbackground ': field_color,
+                            'selectbackground ': highlight,
+                            'selectforeground ': txt_color,
+                            'bordercolor ': bg_color,
+                            'insertcolor ': txt_color,
+                            'arrowcolor' : txt_color,
+                        }
+                    },
+                    '*TCombobox*.Listbox.background': {
+                        'configure': {
+                            'background': bg_color
+                        }
+                    }
+            })
+
+            style.theme_use(theme)
 
         style.element_create("close", "image", "img_close", border=8, sticky='')
         style.layout("CustomNotebook", [("CustomNotebook.client", {"sticky": "nswe"})])
@@ -99,10 +179,11 @@ class app():
         self.root.title(app_name)
         self.root.iconbitmap(icon_path)
         self.book = CustomNotebook(self.root, width=400, height=700)
+        
         self.book.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # title border darkmode let's gooooooooooooooooooo
-        if dark_mode:
+        if dark_mode or theme == 'ozw':
             self.root.update()
             set_window_attribute = ct.windll.dwmapi.DwmSetWindowAttribute
             get_parent = ct.windll.user32.GetParent
@@ -110,7 +191,7 @@ class app():
             value = 2
             value = ct.c_int(value)
             set_window_attribute(hwnd, 20, ct.byref(value),4)
-            
+
             
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.mainloop()
@@ -137,9 +218,9 @@ class ticket_tabs():
         # create the scrollbar
         scrollbar = ttk.Scrollbar(self.main_frame, orient='vertical')
         scrollbar.pack(side="right",fill=tk.Y,expand=False)
-        
         self.canvas = tk.Canvas(self.main_frame, highlightthickness=0,
-                               yscrollcommand=scrollbar.set)
+                               yscrollcommand=scrollbar.set, background=bg_color)
+
         self.canvas.pack(side="left",fill="both",expand=True)
         scrollbar.config(command=self.canvas.yview)
 
@@ -170,7 +251,7 @@ class ticket_tabs():
                 self.add_question(self.sub_frame, q)
 
         # retrieve text button
-        retrieve_button = ttk.Button(self.sub_frame, text=copy_btn_lbl, command= self.get_all_text)
+        retrieve_button = tk.Button(self.sub_frame, text=copy_btn_lbl,  command= self.get_all_text, background=bg_color, foreground=txt_color, activebackground=bg_color, activeforeground=txt_color)
         retrieve_button.pack(side='top', padx=10, pady=10, fill='both', expand=True)
 
         self.root.bind("<Tab>", lambda e: self.tab_cycle(e, False))
@@ -240,7 +321,16 @@ class ticket_tabs():
     def add_worknotes(self):
         wn = ttk.Label(self.sub_frame, text=worknotes_lbl)
         wn.pack()
-        self.text_box = tk.Text(self.sub_frame, height=worknotes_height , wrap=tk.WORD, undo=True)
+        self.text_box = tk.Text(
+                self.sub_frame, 
+                height=worknotes_height,
+                wrap=tk.WORD, undo=True, 
+                background=field_color, 
+                foreground=txt_color, 
+                insertbackground=txt_color,
+                selectbackground=highlight,
+                selectforeground=txt_color
+            )
         self.text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
         self.text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
         self.text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
@@ -351,9 +441,21 @@ if __name__ == "__main__":
     worknotes_style = config['worknotes-style']
     list_style = config['list-style']
     line_separator_style = config['line-separator-style']
-    dark_mode = config['dark-mode']
     worknotes_below = config['worknotes-below']
     copy_btn_lbl = config['copy-btn-lbl']
-    
+    dark_mode = config['dark-window']
+
+    theme = config['theme']
+    if theme == 'ozw':   
+        bg_color = "#222"
+        field_color = "#111"
+        txt_color = "#2afc98"
+        highlight = "#2979ff"
+    else:
+        bg_color = config['bg-color']
+        field_color = config['field-color']
+        txt_color = config['text-color']
+        highlight = config['highlight']
+
     app = app()
 

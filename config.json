@@ -1,14 +1,19 @@
 {
     "app-name": "Capybara Notes",
     "icon-path": "assets/capy-neon-closeup.ico",
-    "worknotes-lbl": "worknotes" ,
+    "worknotes-lbl": "Worknotes" ,
     "copy-btn-lbl": "Copy to clipboard",
     "worknotes-height": 10,
     "worknotes-style": "•",
     "list-style" : "•",
     "line-separator-style": "=================",
-    "worknotes-below": false,
-    "dark-mode": true,
+    "worknotes-below": false,    
+    "theme" : "ozw",
+    "dark-window": false,
+    "bg-color" : "#eee",
+    "field-color": "#fff",
+    "text-color": "#2979ff",
+    "highlight": "#000",
     "questions": [
         {
             "question": "Template question 1",
@@ -48,14 +53,6 @@
         },
         {
             "question": "Template question 10",
-            "default":[]
-        },
-        {
-            "question": "Template question 11",
-            "default":[]
-        },
-        {
-            "question": "Template question 12",
             "default":[]
         }
     ]

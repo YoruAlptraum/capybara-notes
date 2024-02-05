@@ -1,12 +1,16 @@
-# mds_app
-Simple App to assist with filling mds template
+# MDS template app
+Simple App to assist with filling Minimum Data Set (MDS) template
 ====================================================
 # How to install
 
 ====================================================
-# Next updates
-fiz ctrl + z
-add save option to save to file
+# How to customize app
 
 ====================================================
-Image by rawpixel.com
+# Next updates
+implement ctrl + z for entries
+add save option to save to file
+add tab scrolling
+
+====================================================
+Capybara neon image by rawpixel.com
