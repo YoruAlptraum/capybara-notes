@@ -213,7 +213,7 @@ class ticket_tabs():
         self.root.bind('<Control-BackSpace>', self.entry_backspace_word)
         self.root.bind('<Control-Delete>', self.entry_delete_word)
 
-        self.book.add(self.main_frame,text="    ")
+        self.book.add(self.main_frame,text="      ")
 
         # create the scrollbar
         scrollbar = ttk.Scrollbar(self.main_frame, orient='vertical')
@@ -316,7 +316,7 @@ class ticket_tabs():
             entry = ttk.Entry(root)
             if len(q['default']) == 1:
                 entry.insert(0,q['default']) 
-        entry.pack(side='top', fill='x', expand=True, padx=10)            
+        entry.pack(side='top', fill='x', expand=True, padx=10)
 
     def add_worknotes(self):
         wn = ttk.Label(self.sub_frame, text=worknotes_lbl)

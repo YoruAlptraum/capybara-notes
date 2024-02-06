@@ -8,12 +8,12 @@
     "list-style" : "•",
     "line-separator-style": "=================",
     "worknotes-below": false,    
-    "theme" : "ozw",
+    "theme" : "default",
     "dark-window": false,
     "bg-color" : "#eee",
     "field-color": "#fff",
-    "text-color": "#2979ff",
-    "highlight": "#000",
+    "text-color": "#000",
+    "highlight": "#55f",
     "questions": [
         {
             "question": "Template question 1",
@@ -33,26 +33,10 @@
         },
         {
             "question": "Template question 5",
-            "default":[]
+            "default": ["default"]
         },
         {
             "question": "Template question 6",
-            "default":[]
-        },
-        {
-            "question": "Template question 7",
-            "default":[]
-        },
-        {
-            "question": "Template question 8",
-            "default":[]
-        },
-        {
-            "question": "Template question 9",
-            "default":[]
-        },
-        {
-            "question": "Template question 10",
             "default":[]
         }
     ]
