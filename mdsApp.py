@@ -231,6 +231,9 @@ class ticket_tabs():
         self.canvas.bind('<Configure>', self._configure_canvas)
         self.sub_frame_id = self.canvas.create_window((0,0), window=self.sub_frame, anchor='nw')
 
+        # Change font family
+        self.sub_frame.option_add("*Font", custom_font)
+
         # change the name of the current tab
         tab_name_lbl = ttk.Label(self.sub_frame, text='Ticket')
         tab_name_lbl.pack(side='top', padx=10)
@@ -468,6 +471,11 @@ if __name__ == "__main__":
     copy_btn_lbl = config['copy-btn-lbl']
     dark_mode = config['dark-window']
     save_folder_path = config['save-folder-path']
+
+    font_size = config['font-size']
+    font_family = config['font-family']
+
+    custom_font = (font_family, font_size) 
 
     theme = config['theme']
     if theme == 'ozw':   
