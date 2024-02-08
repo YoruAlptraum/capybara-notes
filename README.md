@@ -62,7 +62,7 @@ In "questions" you can change the mds questions according to the template you us
 ## Next updates
 
 - implement ctrl + z for entries
-- add save option to save notes to file
+- fix tab cycling issues
 - add tab scrolling when tabs overflow screen size
 
 ====================================================

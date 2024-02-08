@@ -3,6 +3,8 @@ from tkinter import ttk
 from tkinter import PhotoImage
 import json
 import ctypes as ct
+import datetime
+import os
 
 class CustomNotebook(ttk.Notebook):
     # A ttk Notebook with close buttons on each tab
@@ -213,7 +215,7 @@ class ticket_tabs():
         self.root.bind('<Control-BackSpace>', self.entry_backspace_word)
         self.root.bind('<Control-Delete>', self.entry_delete_word)
 
-        self.book.add(self.main_frame,text="      ")
+        self.book.add(self.main_frame,text="        ")
 
         # create the scrollbar
         scrollbar = ttk.Scrollbar(self.main_frame, orient='vertical')
@@ -251,7 +253,7 @@ class ticket_tabs():
                 self.add_question(self.sub_frame, q)
 
         # retrieve text button
-        retrieve_button = tk.Button(self.sub_frame, text=copy_btn_lbl,  command= self.get_all_text, background=bg_color, foreground=txt_color, activebackground=bg_color, activeforeground=txt_color)
+        retrieve_button = tk.Button(self.sub_frame, text=copy_btn_lbl,  command= self.copy_to_clipboard, background=bg_color, foreground=txt_color, activebackground=bg_color, activeforeground=txt_color)
         retrieve_button.pack(side='top', padx=10, pady=10, fill='both', expand=True)
 
         self.root.bind("<Tab>", lambda e: self.tab_cycle(e, False))
@@ -263,6 +265,8 @@ class ticket_tabs():
                 self.wcycle.append(widget)
 
         self.book.select(self.main_frame)
+        
+        self.tab_name_entry.focus_set()
 
     def text_backspace(self, event):
         event.widget.delete("insert-1c wordstart", "insert")
@@ -337,7 +341,7 @@ class ticket_tabs():
         self.text_box.bind("<Control-BackSpace>" , self.text_backspace)
         self.text_box.bind("<Control-Delete>" , self.text_delete)
 
-    def get_all_text(self):
+    def get_all_text(self) -> str:
         final = ''
         labels = []
         line_separator = f'{line_separator_style} {self.tab_name_entry.get()} {line_separator_style}\n'
@@ -365,10 +369,28 @@ class ticket_tabs():
             final = line_separator + final
         else:
             final += line_separator
-        
+        return final
+
+    def copy_to_clipboard(self):
+        self.save_to_file()
         self.book.clipboard_clear()
-        self.book.clipboard_append(final)
+        self.book.clipboard_append(self.get_all_text())
         self.book.update()
+
+    def save_to_file(self):
+        self.create_folder_if_not_exists(save_folder_path)
+        file_path = f'{save_folder_path if save_folder_path else "."}\{datetime.date.today()}.txt'
+        print(file_path)
+        with open(file_path, 'a', encoding='utf-8') as file:
+            file.write(f"{datetime.datetime.now().strftime('%m-%d %H:%M:%S')}\n")
+            file.write(self.get_all_text())
+
+    def create_folder_if_not_exists(self, folder_path):
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        #     print(f"'{folder_path}' created.")
+        # else:
+        #     print(f"'{folder_path}' already exists.")
 
     def on_focus_in(self, event):
         # Update the previous focus widget during FocusIn event
@@ -396,17 +418,18 @@ class ticket_tabs():
 
     def tab_cycle(self, event, shift):
         # Cycle focus through the specified widgets
-        current_widget = event.widget.focus_get()
+        current_widget = event.widget.focus_get() 
+        wcycle = self.book.inc_tabs[self.book.index("current")].wcycle
 
-        if current_widget in self.wcycle:
-            current_index = self.wcycle.index(current_widget)
-            cyclel = len(self.wcycle)
-            if not shift and current_index + 1 < cyclel:
+        if current_widget in wcycle:
+            current_index = wcycle.index(current_widget)
+            cycle = len(wcycle)
+            if not shift and current_index + 1 < cycle:
                 next_index = (current_index + 1)
-                self.wcycle[next_index].focus_set()
+                wcycle[next_index].focus_set()
             if shift and current_index > 0:
                 next_index = (current_index - 1)
-                self.wcycle[next_index].focus_set()
+                wcycle[next_index].focus_set()
 
         return 'break'
 
@@ -444,13 +467,14 @@ if __name__ == "__main__":
     worknotes_below = config['worknotes-below']
     copy_btn_lbl = config['copy-btn-lbl']
     dark_mode = config['dark-window']
+    save_folder_path = config['save-folder-path']
 
     theme = config['theme']
     if theme == 'ozw':   
-        bg_color = "#222"
-        field_color = "#111"
-        txt_color = "#2afc98"
-        highlight = "#2979ff"
+        bg_color = '#222'
+        field_color = '#111'
+        txt_color = '#2afc98'
+        highlight = '#2979ff'
     else:
         bg_color = config['bg-color']
         field_color = config['field-color']

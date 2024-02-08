@@ -22,6 +22,7 @@ def decode(data):
 
 your_code = encode("""
 
+
 """)
 
 exec(decode(your_code))
