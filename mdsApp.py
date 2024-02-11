@@ -21,9 +21,26 @@ class CustomNotebook(ttk.Notebook):
         new_tab_button.bind('<Button-1>',self.add_tab)
         new_tab_button.place(relx = 1, y=10, anchor='e')
         self.add_tab()
+        self.root.bind('<Control-n>',self.add_tab)
+
+        self.root.bind("<Control-s>", self.save)
+        self.root.bind("<Control-w>", lambda e: self.delete_tab(self.index("current")) if self.index("end") != 0 else print("nothing open"))
+        
+        self.root.bind("<Control-Prior>", self.previous_tab)
+        self.root.bind("<Control-Next>", self.next_tab)
 
         self.bind("<ButtonPress-1>", self.on_close_press, True)
         self.bind("<ButtonRelease-1>", self.on_close_release)
+
+    def save(self, e=None):
+        if self.index("end") != 0:
+            self.inc_tabs[self.index("current")].copy_to_clipboard()
+
+    def delete_tab(self, index):
+        if index >= 0:
+            self.inc_tabs[index].unbind_and_delete()
+            self.inc_tabs.pop(index)
+            self.event_generate("<<NotebookTabClosed>>")
 
     def on_close_press(self, event):
         element = self.identify(event.x, event.y)
@@ -36,6 +53,13 @@ class CustomNotebook(ttk.Notebook):
 
     def on_close_release(self, event):
         if not self.instate(['pressed']):
+            # if not closing the tab set focus to tab name entry
+            try:
+                cur_ind = self.index("@%d,%d" % (event.x, event.y))
+                self.inc_tabs[cur_ind].tab_name_entry.focus_set()
+            except:
+                print("no tabs")
+                pass
             return
 
         element =  self.identify(event.x, event.y)
@@ -46,9 +70,7 @@ class CustomNotebook(ttk.Notebook):
         index = self.index("@%d,%d" % (event.x, event.y))
 
         if self._active == index:
-            self.inc_tabs[index].unbind_and_delete()
-            self.inc_tabs.pop(index)
-            self.event_generate("<<NotebookTabClosed>>")
+            self.delete_tab(index)
 
         self.state(["!pressed"])
         self._active = None
@@ -60,6 +82,19 @@ class CustomNotebook(ttk.Notebook):
     def add_tab(self, *args):
         tab = ticket_tabs(self, self.root)
         self.inc_tabs.append(tab)
+        tab.tab_name_entry.focus_set()
+
+    def previous_tab(self, e):
+        ind = (self.index("current") - 1)%self.index("end")
+        self.inc_tabs[ind].tab_name_entry.focus_set()
+        self.inc_tabs[ind].change_tab_name()
+        self.select(ind)
+    
+    def next_tab(self, e):
+        ind = (self.index("current") + 1)%self.index("end")
+        self.inc_tabs[ind].tab_name_entry.focus_set()
+        self.inc_tabs[ind].change_tab_name()
+        self.select(ind)
 
     def __initialize_custom_style(self):
         style = ttk.Style()
@@ -272,8 +307,6 @@ class ticket_tabs():
                 self.wcycle.append(widget)
 
         self.book.select(self.main_frame)
-        
-        self.tab_name_entry.focus_set()
 
     def text_backspace(self, event):
         event.widget.delete("insert-1c wordstart", "insert")

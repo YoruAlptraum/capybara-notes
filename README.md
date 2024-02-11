@@ -65,7 +65,6 @@ In "questions" you can change the mds questions according to the template you us
 
 ## Next updates
 
-- implement shortcuts to open new tab and to copy to clipboard
 - Make the undo/redo and the backspace behaviour more uniform across widgets
 
 ====================================================
