@@ -52,6 +52,10 @@ In themes you can customize the application colors
 - "text-color" color for the text
 - "highlight" color for the text selection
 
+- "font-family": font family of the text on the app
+- "font-size": font size of text
+- "save-folder-path": folder path where the notes will be saved
+
 ## Template questions 
 
 In "questions" you can change the mds questions according to the template you use
@@ -61,9 +65,9 @@ In "questions" you can change the mds questions according to the template you us
 
 ## Next updates
 
-- implement ctrl + z for entries
-- add tab scrolling when tabs overflow screen size
+- implement shortcuts to open new tab and to copy to clipboard
+- Make the undo/redo and the backspace behaviour more uniform across widgets
 
 ====================================================
 
- Capybara neon AI generated Image by rawpixel.com
+Capybara neon AI generated Image by rawpixel.com

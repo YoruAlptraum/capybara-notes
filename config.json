@@ -14,8 +14,8 @@
     "field-color": "#fff",
     "text-color": "#000",
     "highlight": "#55f",
-    "font-family": "System",
-    "font-size": 10,
+    "font-family": "Arial",
+    "font-size": 9,
     "save-folder-path": "notes",
     "questions": [
         {

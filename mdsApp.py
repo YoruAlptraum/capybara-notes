@@ -87,7 +87,7 @@ class CustomNotebook(ttk.Notebook):
                             "background" : bg_color,
                             "foreground" : txt_color,
                             "focuscolor" : field_color,
-                            "bordercolor": txt_color
+                            "bordercolor": txt_color,
                         },
                     },
                     'TFrame': {
@@ -173,38 +173,42 @@ class CustomNotebook(ttk.Notebook):
             ]
         })
     ])
+        style.configure('CustomNotebook.Tab', font=custom_font) 
 
-class app():
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.geometry('500x500')
-        self.root.title(app_name)
-        self.root.iconbitmap(icon_path)
-        self.book = CustomNotebook(self.root, width=400, height=700)
-        
-        self.book.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+class CustEntry(ttk.Entry):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.bind("<Control-z>", self.undo)
+        self.bind("<Control-y>", self.redo)
 
-        # title border darkmode let's gooooooooooooooooooo
-        if dark_mode or theme == 'ozw':
-            self.root.update()
-            set_window_attribute = ct.windll.dwmapi.DwmSetWindowAttribute
-            get_parent = ct.windll.user32.GetParent
-            hwnd = get_parent(self.root.winfo_id())
-            value = 2
-            value = ct.c_int(value)
-            set_window_attribute(hwnd, 20, ct.byref(value),4)
+        self.bind("<space>", self.stack_undo)
+        self.bind("<Control-v>", self.stack_undo)
+        self.bind("<BackSpace>", self.stack_undo)
+        self.bind("<Delete>", self.stack_undo)
 
-            
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.root.mainloop()
+        self.undo_stack = []
+        self.redo_stack = []
 
-    def on_close(self):
-        # Destroy widgets before closing the main window
-        self.book.on_close()
-        for bind in self.root.bind():
-            self.root.unbind(bind)
-        self.root.destroy()
-    
+    def undo(self, event=None):
+        if self.undo_stack:
+            text = self.undo_stack.pop()
+            self.redo_stack.append(self.get())
+            self.delete(0, tk.END)
+            self.insert(0, text)
+        else:
+            self.delete(0,tk.END)
+
+    def redo(self, event=None):
+        if self.redo_stack:
+            text = self.redo_stack.pop()
+            self.undo_stack.append(self.get())
+            self.delete(0, tk.END)
+            self.insert(0, text)
+
+    def stack_undo(self, event):
+        self.undo_stack.append(self.get())
+        self.redo_stack.clear()
+
 class ticket_tabs():
     def __init__(self, book, root):
         self.book = book
@@ -237,7 +241,7 @@ class ticket_tabs():
         # change the name of the current tab
         tab_name_lbl = ttk.Label(self.sub_frame, text='Ticket')
         tab_name_lbl.pack(side='top', padx=10)
-        self.tab_name_entry = ttk.Entry(self.sub_frame)
+        self.tab_name_entry = CustEntry(self.sub_frame)
         self.tab_name_entry.pack(side='top', padx=10)
         # bind events
         self.previous_focus_widget = None
@@ -263,7 +267,7 @@ class ticket_tabs():
         self.root.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
         # list wcycles on tab
         for widget in self.sub_frame.winfo_children():
-            if isinstance(widget, (tk.Text, ttk.Entry)):
+            if isinstance(widget, (tk.Text, CustEntry, ttk.Combobox)):
                 # Check if the widget is a Label or Entry
                 self.wcycle.append(widget)
 
@@ -285,7 +289,7 @@ class ticket_tabs():
         
         # Find the position of the last space before the current insertion cursor
         start_pos = entry.get()[:current_pos].rfind(' ') +1
-        
+
         # If no space is found, consider the start of the entry
         if start_pos == -1:
             start_pos = 0
@@ -320,7 +324,7 @@ class ticket_tabs():
             entry = ttk.Combobox(root)
             entry['values'] = q['default']
         else:
-            entry = ttk.Entry(root)
+            entry = CustEntry(root)
             if len(q['default']) == 1:
                 entry.insert(0,q['default']) 
         entry.pack(side='top', fill='x', expand=True, padx=10)
@@ -385,7 +389,7 @@ class ticket_tabs():
         file_path = f'{save_folder_path if save_folder_path else "."}\{datetime.date.today()}.txt'
         print(file_path)
         with open(file_path, 'a', encoding='utf-8') as file:
-            file.write(f"{datetime.datetime.now().strftime('%m-%d %H:%M:%S')}\n")
+            file.write(f"\n{datetime.datetime.now().strftime('%m-%d %H:%M:%S')}\n\n")
             file.write(self.get_all_text())
 
     def create_folder_if_not_exists(self, folder_path):
@@ -441,6 +445,8 @@ class ticket_tabs():
         for widget in self.sub_frame.winfo_children():
             for e in widget.bind():
                 widget.unbind(e)
+            #     print(e)
+            # print(widget)
             widget.destroy()
 
         self.sub_frame.unbind('<Configure>')
@@ -457,6 +463,36 @@ class ticket_tabs():
         self.main_frame.unbind('<FocusIn>')
         self.main_frame.destroy()
 
+class app():
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.geometry('500x500')
+        self.root.title(app_name)
+        self.root.iconbitmap(icon_path)
+        self.book = CustomNotebook(self.root, width=400, height=700)
+
+        self.book.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # title border darkmode let's gooooooooooooooooooo
+        if dark_mode or theme == 'ozw':
+            self.root.update()
+            set_window_attribute = ct.windll.dwmapi.DwmSetWindowAttribute
+            get_parent = ct.windll.user32.GetParent
+            hwnd = get_parent(self.root.winfo_id())
+            value = 2
+            value = ct.c_int(value)
+            set_window_attribute(hwnd, 20, ct.byref(value),4)
+            
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.root.mainloop()
+
+    def on_close(self):
+        # Destroy widgets before closing the main window
+        self.book.on_close()
+        for bind in self.root.bind():
+            self.root.unbind(bind)
+        self.root.destroy()
+    
 if __name__ == "__main__":
     with open('config.json', 'r', encoding='utf-8') as json_file:
         config = json.load(json_file)

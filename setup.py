@@ -4,7 +4,7 @@ import py2exe
 
 setup(
     windows=[{
-        "script":"mdsApp.py",
+        "script":"baseencoder.py",
         'dest_base': 'Capybara Notes',
         "icon_resources" : [(1, 'assets/capy-neon-closeup.ico')],
         'company_name': 'YoruAlptraum',
