@@ -210,39 +210,23 @@ class CustomNotebook(ttk.Notebook):
     ])
         style.configure('CustomNotebook.Tab', font=custom_font) 
 
-class CustEntry(ttk.Entry):
+class CustText(tk.Text):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-        self.bind("<Control-z>", self.undo)
-        self.bind("<Control-y>", self.redo)
-
-        self.bind("<space>", self.stack_undo)
-        self.bind("<Control-v>", self.stack_undo)
-        self.bind("<BackSpace>", self.stack_undo)
-        self.bind("<Delete>", self.stack_undo)
-
         self.undo_stack = []
         self.redo_stack = []
 
-    def undo(self, event=None):
-        if self.undo_stack:
-            text = self.undo_stack.pop()
-            self.redo_stack.append(self.get())
-            self.delete(0, tk.END)
-            self.insert(0, text)
-        else:
-            self.delete(0,tk.END)
+class CustEntry(ttk.Entry):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.undo_stack = []
+        self.redo_stack = []
 
-    def redo(self, event=None):
-        if self.redo_stack:
-            text = self.redo_stack.pop()
-            self.undo_stack.append(self.get())
-            self.delete(0, tk.END)
-            self.insert(0, text)
-
-    def stack_undo(self, event):
-        self.undo_stack.append(self.get())
-        self.redo_stack.clear()
+class CustCombobox(ttk.Combobox):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.undo_stack = []
+        self.redo_stack = []
 
 class ticket_tabs():
     def __init__(self, book, root):
@@ -251,8 +235,6 @@ class ticket_tabs():
         self.book.pack(side="top", fill="both", expand=True)
         self.wcycle = []
         self.main_frame = ttk.Frame(book)
-        self.root.bind('<Control-BackSpace>', self.entry_backspace_word)
-        self.root.bind('<Control-Delete>', self.entry_delete_word)
 
         self.book.add(self.main_frame,text="        ")
 
@@ -302,59 +284,18 @@ class ticket_tabs():
         self.root.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
         # list wcycles on tab
         for widget in self.sub_frame.winfo_children():
-            if isinstance(widget, (tk.Text, CustEntry, ttk.Combobox)):
+            if isinstance(widget, (tk.Text, ttk.Entry, ttk.Combobox)):
                 # Check if the widget is a Label or Entry
                 self.wcycle.append(widget)
+                self.bind_undo_redo(widget)
 
         self.book.select(self.main_frame)
-
-    def text_backspace(self, event):
-        event.widget.delete("insert-1c wordstart", "insert")
-        return "break"
-
-    def text_delete(self, event):
-        event.widget.delete("insert", "insert wordend")
-        return "break"
-    
-    def entry_backspace_word(self,event):
-        entry = event.widget
-        current_pos = entry.index(tk.INSERT)
-        
-        # Find the position of the last space before the current insertion cursor
-        start_pos = entry.get()[:current_pos].rfind(' ') +1
-
-        # If no space is found, consider the start of the entry
-        if start_pos == -1:
-            start_pos = 0
-
-        # Delete the text from the last space to the current insertion cursor
-        entry.delete(start_pos, current_pos)
-
-        return 'break'  # Prevent default behavior (e.g., inserting a character)
-
-    def entry_delete_word(self, event):
-        entry = event.widget
-        current_pos = entry.index(tk.INSERT)
-        
-        # Find the position of the last space before the current insertion cursor
-        end_pos = entry.get()[current_pos:].find(' ') 
-
-        # If no space is found, consider the end of the entry
-        if end_pos == -1:
-            end_pos = entry.index(tk.END)
-        else:
-            end_pos += current_pos
-
-        # Delete the text from the last space to the current insertion cursor
-        entry.delete(current_pos, end_pos)
-
-        return 'break'  # Prevent default behavior (e.g., inserting a character)
 
     def add_question(self,root, q):
         lbl = ttk.Label(root, text=q["question"])
         lbl.pack(side='top', fill='x', anchor='w', padx=10)
         if len(q['default']) > 1:
-            entry = ttk.Combobox(root)
+            entry = CustCombobox(root)
             entry['values'] = q['default']
         else:
             entry = CustEntry(root)
@@ -365,10 +306,10 @@ class ticket_tabs():
     def add_worknotes(self):
         wn = ttk.Label(self.sub_frame, text=worknotes_lbl)
         wn.pack()
-        self.text_box = tk.Text(
+        self.text_box = CustText(
                 self.sub_frame, 
                 height=worknotes_height,
-                wrap=tk.WORD, undo=True, 
+                wrap=tk.WORD, 
                 background=field_color, 
                 foreground=txt_color, 
                 insertbackground=txt_color,
@@ -378,8 +319,6 @@ class ticket_tabs():
         self.text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
         self.text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
         self.text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
-        self.text_box.bind("<Control-BackSpace>" , self.text_backspace)
-        self.text_box.bind("<Control-Delete>" , self.text_delete)
 
     def get_all_text(self) -> str:
         final = ''
@@ -442,7 +381,60 @@ class ticket_tabs():
         if self.previous_focus_widget:
             ind = self.book.index(self.previous_focus_widget)
             self.book.tab(ind, text=f'  {self.book.inc_tabs[ind].tab_name_entry.get()}  ')
-        
+
+    def bind_undo_redo(self, widget):
+        widget.bind("<Control-z>", self.undo)
+        widget.bind("<Control-y>", self.redo)
+
+        widget.bind("<space>", self.stack_undo)
+        widget.bind("<Control-v>", self.stack_undo)
+        widget.bind("<BackSpace>", self.stack_undo)
+        widget.bind("<Delete>", self.stack_undo)
+
+    def undo(self, event):
+        widget = event.widget
+        if widget.undo_stack:
+            ind = widget.index("insert")
+            text = widget.undo_stack.pop()
+            if isinstance(widget, tk.Text):
+                widget.redo_stack.append(widget.get("1.0", "end-1c"))
+                widget.delete("1.0", "end-1c")
+                widget.insert("1.0", text)
+                widget.mark_set("insert",ind)
+            else:
+                widget.redo_stack.append(widget.get())
+                widget.delete(0, tk.END)
+                widget.insert(0, text)
+                widget.icursor(ind)
+        elif isinstance(widget, tk.Text):
+            widget.delete("1.0","end-1c")
+        else:
+            widget.delete(0,tk.END)
+
+    def redo(widget, event):
+        widget = event.widget
+        if widget.redo_stack:
+            ind = widget.index("insert")
+            text = widget.redo_stack.pop()
+            if isinstance(widget, tk.Text):
+                widget.undo_stack.append(widget.get())
+                widget.delete("1.0", "end-1c")
+                widget.insert("1.0", text)
+                widget.mark_set("insert",ind)
+            else:
+                widget.undo_stack.append(widget.get())
+                widget.delete(0, tk.END)
+                widget.insert(0, text)
+                widget.icursor(ind)
+
+    def stack_undo(widget, event):
+        widget = event.widget
+        if isinstance(widget, tk.Text):
+            widget.undo_stack.append(widget.get("1.0", "end-1c"))
+        else:
+            widget.undo_stack.append(widget.get())
+        widget.redo_stack.clear()
+
     def _configure_interior(self,event):
         # update the scrollbars to match sub frame size
         size = (self.sub_frame.winfo_reqwidth(), self.sub_frame.winfo_reqheight())
@@ -504,6 +496,9 @@ class app():
         self.root.iconbitmap(icon_path)
         self.book = CustomNotebook(self.root, width=400, height=700)
 
+        self.root.bind('<Control-BackSpace>', self.entry_backspace_word)
+        self.root.bind('<Control-Delete>', self.entry_delete_word)
+
         self.book.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # title border darkmode let's gooooooooooooooooooo
@@ -518,6 +513,65 @@ class app():
             
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.mainloop()
+    
+    def entry_backspace_word(self,event):
+        w = event.widget
+        if isinstance(w, ttk.Entry):
+            current_pos = w.index(tk.INSERT)
+            
+            # Find the position of the last space before the current insertion cursor
+            start_pos = w.get()[:current_pos].rfind(' ') +1
+
+            # If no space is found, consider the start of the entry
+            if start_pos == -1:
+                start_pos = 0
+
+            # Delete the text from the last space to the current insertion cursor
+            w.delete(start_pos, current_pos)
+        else: 
+            line, ind = w.index("insert").split('.')
+            txt = w.get(f"{line}.0",f"{line}.end")
+            
+            start_pos = txt[:(int(ind) - 1)].rfind(' ') + 1
+            if start_pos == -1:
+                start_pos = 0
+
+            w.delete(f"{line}.{start_pos}", f"{line}.{ind}")
+
+        return 'break'
+
+    def entry_delete_word(self, event):
+        w = event.widget
+        if isinstance(w, ttk.Entry):
+            current_pos = w.index(tk.INSERT)
+            
+            # Find the position of the last space before the current insertion cursor
+            end_pos = w.get()[current_pos:].find(' ') 
+
+            # If no space is found, consider the end of the w
+            if end_pos == -1:
+                end_pos = w.index(tk.END)
+            else:
+                end_pos += current_pos
+
+            # Delete the text from the last space to the current insertion cursor
+            w.delete(current_pos, end_pos)
+        else:
+            w = event.widget
+            line, ind = w.index("insert").split('.')
+            txt = w.get(f"{line}.0",f"{line}.end")
+            ind = int(ind)
+
+            rel = txt[(ind + 1):].find(' ')
+
+            if rel == -1:
+                end_pos = w.index("end-1c").split('.')[1]
+            else:
+                end_pos = ind + rel + 1
+
+            w.delete(f"{line}.{ind}", f"{line}.{end_pos}")
+
+        return 'break'  # Prevent default behavior (e.g., inserting a character)
 
     def on_close(self):
         # Destroy widgets before closing the main window

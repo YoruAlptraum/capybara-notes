@@ -63,9 +63,12 @@ In "questions" you can change the mds questions according to the template you us
 - "question" is the question text
 - "default" is the default value, if there is only one default option it is filled automatically and if there is more than one they are displayed as a combobox
 
-## Next updates
+## Shortcuts
 
-- Make the undo/redo and the backspace behaviour more uniform across widgets
+- Ctrl + n: open new tab
+- Ctrl + w: close current tab
+- Ctrl + s: copy to clipboard and save
+- Ctrl + page up/down: move between tabs
 
 ====================================================
 
