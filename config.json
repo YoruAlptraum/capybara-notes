@@ -1,7 +1,7 @@
 {
     "app-name": "Capybara Notes",
     "icon-path": "assets/capy-neon-closeup.ico",
-    "worknotes-lbl": "Worknotes" ,
+    "worknotes-lbl": "Work notes" ,
     "copy-btn-lbl": "Copy to clipboard",
     "worknotes-height": 10,
     "worknotes-style": "•",

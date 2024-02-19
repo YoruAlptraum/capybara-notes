@@ -417,7 +417,7 @@ class ticket_tabs():
             ind = widget.index("insert")
             text = widget.redo_stack.pop()
             if isinstance(widget, tk.Text):
-                widget.undo_stack.append(widget.get())
+                widget.undo_stack.append(widget.get("1.0", "end-1c"))
                 widget.delete("1.0", "end-1c")
                 widget.insert("1.0", text)
                 widget.mark_set("insert",ind)
