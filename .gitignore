@@ -33,6 +33,10 @@ MANIFEST
 config
 test.py
 notes
+mdsApp.dist
+mdsApp.build
+mdsApp.onefile-build
+Capybara Notes.exe
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

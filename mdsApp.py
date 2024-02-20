@@ -22,6 +22,7 @@ class CustomNotebook(ttk.Notebook):
         new_tab_button.place(relx = 1, y=10, anchor='e')
         self.add_tab()
         self.root.bind('<Control-n>',self.add_tab)
+        self.root.bind('<Control-t>',self.add_tab)
 
         self.root.bind("<Control-s>", self.save)
         self.root.bind("<Control-w>", lambda e: self.delete_tab(self.index("current")) if self.index("end") != 0 else print("nothing open"))
@@ -407,8 +408,16 @@ class ticket_tabs():
                 widget.insert(0, text)
                 widget.icursor(ind)
         elif isinstance(widget, tk.Text):
+            if isinstance(widget, tk.Text):
+                widget.redo_stack.append(widget.get("1.0", "end-1c"))
+            else:
+                widget.redo_stack.append(widget.get())
             widget.delete("1.0","end-1c")
         else:
+            if isinstance(widget, tk.Text):
+                widget.redo_stack.append(widget.get("1.0", "end-1c"))
+            else:
+                widget.redo_stack.append(widget.get())
             widget.delete(0,tk.END)
 
     def redo(widget, event):

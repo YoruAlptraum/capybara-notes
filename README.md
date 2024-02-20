@@ -65,7 +65,7 @@ In "questions" you can change the mds questions according to the template you us
 
 ## Shortcuts
 
-- Ctrl + n: open new tab
+- Ctrl + n & Ctrl + t: open new tab
 - Ctrl + w: close current tab
 - Ctrl + s: copy to clipboard and save
 - Ctrl + page up/down: move between tabs

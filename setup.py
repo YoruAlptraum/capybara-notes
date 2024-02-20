@@ -8,7 +8,7 @@ setup(
         'dest_base': 'Capybara Notes',
         "icon_resources" : [(1, 'assets/capy-neon-closeup.ico')],
         'company_name': 'YoruAlptraum',
-        'version': '1.3.0'
+        'version': '1.4.1'
         }],
     options = {"py2exe": {
         "includes": {"tkinter"},
@@ -19,3 +19,6 @@ setup(
     author="Ozawa | github.com/YoruAlptraum",
     description="Simple mds app",
 )
+
+# configuration for using nuitka 
+# nuitka --onefile --enable-plugin=tk-inter --disable-console --windows-icon-from-ico=assets/capy-neon-closeup.ico  --output-filename="Capybara Notes" --company-name=YoruAlptraum --product-name=Capybara_Notes --file-version=1.4.1 --product-version=1.4.1 --file-description="Simple mds app" mdsApp.py 
