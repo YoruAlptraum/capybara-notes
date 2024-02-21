@@ -21,4 +21,4 @@ setup(
 )
 
 # configuration for using nuitka 
-# nuitka --onefile --enable-plugin=tk-inter --disable-console --windows-icon-from-ico=assets/capy-neon-closeup.ico  --output-filename="Capybara Notes" --company-name=YoruAlptraum --product-name=Capybara_Notes --file-version=1.4.1 --product-version=1.4.1 --file-description="Simple mds app" mdsApp.py 
+# nuitka --standalone --output-dir=%userprofile%\downloads --enable-plugin=tk-inter --remove-output --disable-console --windows-icon-from-ico=assets/capy-neon-closeup.ico --output-filename="Capybara Notes" --company-name=YoruAlptraum --product-name=Capybara_Notes --file-version=1.4.1 --product-version=1.4.1 --file-description="Simple mds app" mdsApp.py 

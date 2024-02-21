@@ -3,7 +3,7 @@
     "icon-path": "assets/capy-neon-closeup.ico",
     "worknotes-lbl": "Work notes" ,
     "copy-btn-lbl": "Copy to clipboard",
-    "worknotes-height": 10,
+    "worknotes-height": 7,
     "worknotes-style": "•",
     "list-style" : "•",
     "line-separator-style": "=================",
@@ -16,7 +16,7 @@
     "highlight": "#55f",
     "font-family": "Arial",
     "font-size": 9,
-    "save-folder-path": "notes",
+    "save-folder-path": "%userprofile%\\documents\\notes",
     "questions": [
         {
             "question": "Template question 1",

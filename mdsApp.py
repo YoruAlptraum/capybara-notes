@@ -358,8 +358,11 @@ class ticket_tabs():
         self.book.update()
 
     def save_to_file(self):
+        save_folder_path = os.path.expandvars(config['save-folder-path'])
+        if not save_folder_path:
+            save_folder_path = "notes"
         self.create_folder_if_not_exists(save_folder_path)
-        file_path = f'{save_folder_path if save_folder_path else "."}\{datetime.date.today()}.txt'
+        file_path = f'{save_folder_path}\{datetime.date.today()}.txt' 
         print(file_path)
         with open(file_path, 'a', encoding='utf-8') as file:
             file.write(f"\n{datetime.datetime.now().strftime('%m-%d %H:%M:%S')}\n\n")
@@ -602,7 +605,6 @@ if __name__ == "__main__":
     worknotes_below = config['worknotes-below']
     copy_btn_lbl = config['copy-btn-lbl']
     dark_mode = config['dark-window']
-    save_folder_path = config['save-folder-path']
 
     font_size = config['font-size']
     font_family = config['font-family']
