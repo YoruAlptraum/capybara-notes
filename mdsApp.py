@@ -22,7 +22,7 @@ class CustomNotebook(ttk.Notebook):
         new_tab_button.place(relx = 1, y=10, anchor='e')
         self.add_tab()
         self.root.bind('<Control-n>',self.add_tab)
-        self.root.bind('<Control-t>',self.add_tab)
+        self.root.bind('<Control-t>', self.add_tab)
 
         self.root.bind("<Control-s>", self.save)
         self.root.bind("<Control-w>", lambda e: self.delete_tab(self.index("current")) if self.index("end") != 0 else print("nothing open"))
@@ -84,6 +84,7 @@ class CustomNotebook(ttk.Notebook):
         tab = ticket_tabs(self, self.root)
         self.inc_tabs.append(tab)
         tab.tab_name_entry.focus_set()
+        return "break"
 
     def previous_tab(self, e):
         ind = (self.index("current") - 1)%self.index("end")
@@ -320,6 +321,8 @@ class ticket_tabs():
         self.text_box.pack(side='top',  padx=10, pady=10, fill='both', expand=True)
         self.text_box.bind("<Tab>", lambda e: self.tab_cycle(e, False))
         self.text_box.bind("<Shift-Tab>", lambda e: self.tab_cycle(e, True))
+        
+        self.text_box.bind('<Control-t>', self.book.add_tab)
 
     def get_all_text(self) -> str:
         final = ''
@@ -392,24 +395,23 @@ class ticket_tabs():
 
         widget.bind("<space>", self.stack_undo)
         widget.bind("<Control-v>", self.stack_undo)
+        widget.bind("<Control-x>", self.stack_undo)
         widget.bind("<BackSpace>", self.stack_undo)
         widget.bind("<Delete>", self.stack_undo)
+        widget.bind("<Return>", self.stack_undo)
 
     def undo(self, event):
         widget = event.widget
         if widget.undo_stack:
-            ind = widget.index("insert")
             text = widget.undo_stack.pop()
             if isinstance(widget, tk.Text):
                 widget.redo_stack.append(widget.get("1.0", "end-1c"))
                 widget.delete("1.0", "end-1c")
                 widget.insert("1.0", text)
-                widget.mark_set("insert",ind)
             else:
                 widget.redo_stack.append(widget.get())
                 widget.delete(0, tk.END)
                 widget.insert(0, text)
-                widget.icursor(ind)
         elif isinstance(widget, tk.Text):
             if isinstance(widget, tk.Text):
                 widget.redo_stack.append(widget.get("1.0", "end-1c"))
@@ -432,12 +434,10 @@ class ticket_tabs():
                 widget.undo_stack.append(widget.get("1.0", "end-1c"))
                 widget.delete("1.0", "end-1c")
                 widget.insert("1.0", text)
-                widget.mark_set("insert",ind)
             else:
                 widget.undo_stack.append(widget.get())
                 widget.delete(0, tk.END)
                 widget.insert(0, text)
-                widget.icursor(ind)
 
     def stack_undo(widget, event):
         widget = event.widget
