@@ -8,7 +8,7 @@ setup(
         'dest_base': 'Capybara Notes',
         "icon_resources" : [(1, 'assets/capy-neon-closeup.ico')],
         'company_name': 'YoruAlptraum',
-        'version': '1.4.2'
+        'version': '1.4.1'
         }],
     options = {"py2exe": {
         "includes": {"tkinter"},
